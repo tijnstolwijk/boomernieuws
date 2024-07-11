@@ -66,11 +66,10 @@ func printPage(page int) {
 }
 
 func clearScreen(){
-  var cmd *exec.Cmd
+  cmd := exec.Command("clear")
   if runtime.GOOS == "windows"{
         cmd = exec.Command("cmd", "/c", "cls")
   }
-  cmd = exec.Command("clear")
   cmd.Stdout = os.Stdout
   cmd.Run()
 }
@@ -91,14 +90,10 @@ func processHTML(line string) string{
     for i := 0; i < len(chars); i++{
       if chars[i] == "<"{
         begin = i
-        //fmt.Printf("%v found at i=%d\n", chars[i], i)
       }
       if chars[i] == ">"{
         end = i
-        //fmt.Printf("%v found at i=%d\n", chars[i], i)
-        //fmt.Printf("Deleting from %v to %v\n", chars[begin], chars[end])
         chars = slices.Delete(chars, begin, end + 1)
-        //fmt.Printf(strings.Join(chars, "")+"\n")
         break
       }
     }
