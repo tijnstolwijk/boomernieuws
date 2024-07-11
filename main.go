@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+  "os/exec"
 	"slices"
 	"strconv"
 	"strings"
-
+  "runtime"
 	"github.com/h2so5/goback/regexp"
 )
 
@@ -36,7 +37,7 @@ func main(){
     fmt.Scan(&input)
     pageNum, err := strconv.ParseInt(input, 10, 0)
     if err == nil {
-      fmt.Println("\033[2J")
+      clearScreen()
       printPage(int(pageNum))
     }else{
       if input == "q"{
@@ -63,6 +64,15 @@ func printPage(page int) {
   }
 }
 
+func clearScreen(){
+  var cmd *exec.Cmd
+  if runtime.GOOS == "windows"{
+        cmd = exec.Command("cmd", "/c", "cls")
+  }
+  cmd = exec.Command("clear")
+  cmd.Stdout = os.Stdout
+  cmd.Run()
+}
 
 // Text processing functions
 func processHTML(line string) string{
@@ -108,4 +118,5 @@ func replaceSpecialChars(line string) string{
   // https://www.html.am/reference/html-special-characters.cfm ISO 8859-1 section
   return ""
 }
+
 
