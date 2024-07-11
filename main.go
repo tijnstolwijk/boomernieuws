@@ -28,14 +28,20 @@ type fastTextLink struct {
 }
 
 func main(){
+  args := os.Args[1:]
+  if len(args) != 0{
+    page := args[0]
+    printPage(page)
+    os.Exit(0)
+  }
   printPage("101")
   
   var input string
   for {
     fmt.Print("Pagina: ")
     fmt.Scan(&input)
-    clearScreen()
     if input == "q"{os.Exit(0)}
+    clearScreen()
     printPage(input)
     }
   }
@@ -77,15 +83,12 @@ func clearScreen(){
 func processHTML(line string) string{
   // Remove all HTML tags
   chars := strings.Split(line, "")
-
   var begin int
   var end int
-
   for {
     if !slices.Contains(chars, "<") && !slices.Contains(chars, ">"){
       break
     }
-
     for i := 0; i < len(chars); i++{
       if chars[i] == "<"{
         begin = i
@@ -96,7 +99,6 @@ func processHTML(line string) string{
         break
       }
     }
-
   }
   return strings.Join(chars, "")
 }
