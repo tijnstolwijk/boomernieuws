@@ -7,7 +7,6 @@ import (
 	"os"
   "os/exec"
 	"slices"
-	"strconv"
 	"strings"
   "runtime"
 	"github.com/h2so5/goback/regexp"
@@ -29,32 +28,32 @@ type fastTextLink struct {
 }
 
 func main(){
-  printPage(101)
+  printPage("101")
   
   var input string
   for {
     fmt.Print("Pagina: ")
     fmt.Scan(&input)
-    pageNum, err := strconv.ParseInt(input, 10, 0)
-    if err == nil {
-      clearScreen()
-      printPage(int(pageNum))
-    }else{
-      if input == "q"{
-        os.Exit(0)
-      }
+    clearScreen()
+    if input == "q"{os.Exit(0)}
+    printPage(input)
     }
   }
-}
 
-func printPage(page int) {
-  url := fmt.Sprintf("https://teletekst-data.nos.nl/json/%d", page)
+
+
+func printPage(page string) {
+  url := fmt.Sprintf("https://teletekst-data.nos.nl/json/%v", page)
   response, err := http.Get(url)
   if err != nil {
     fmt.Printf("Error getting to teletekst\n")
     os.Exit(1)
   }
   var pagina teletekst_pagina 
+  if response.ContentLength == 0 {
+    fmt.Printf("Page does not exist\n") 
+    return
+  }
   err = json.NewDecoder(response.Body).Decode(&pagina)
   lines := strings.Split(pagina.Content, "\n")
   for i := 0; i < len(lines); i++ {
