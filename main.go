@@ -30,6 +30,15 @@ type fastTextLink struct {
 func main(){
   args := os.Args[1:]
   if len(args) != 0{
+    if args[0] == "--output"{
+      if len(args) == 3{
+        path := args[1]
+        page := args[2]
+        writePageToFile(path, page)
+        os.Exit(0)
+      }
+    }
+    
     page := args[0]
     printPage(page)
     os.Exit(0)
@@ -69,6 +78,39 @@ func printPage(page string) {
     fmt.Printf("%v\n", processed_line)
   }
 }
+
+func writePageToFile(path string, page string){
+  url := fmt.Sprintf("https://teletekst-data.nos.nl/json/%v", page)
+  response, err := http.Get(url)
+  if err != nil {
+    fmt.Printf("Error getting to teletekst\n")
+    os.Exit(1)
+  }
+  var pagina teletekst_pagina 
+  if response.ContentLength == 0 {
+    fmt.Printf("Page does not exist\n") 
+    return
+  }
+  file, err := os.Create(path)
+  if err != nil{
+    panic(err)
+  }
+  defer file.Close()
+
+  err = json.NewDecoder(response.Body).Decode(&pagina)
+  lines := strings.Split(pagina.Content, "\n")
+  for i := 0; i < len(lines); i++ {
+    processed_line := processHTML(lines[i])
+    processed_line = replaceBlockCharsR(processed_line)
+    processed_line = replaceSpecialChars(processed_line)
+    _, err := file.WriteString(fmt.Sprintf("%v\n", processed_line))
+    if err != nil{
+      panic(err)
+    }
+  }
+  file.Sync()
+}
+
 
 func clearScreen(){
   cmd := exec.Command("clear")
