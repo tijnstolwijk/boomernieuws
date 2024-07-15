@@ -10,6 +10,7 @@ import (
 	"strings"
   "runtime"
 	"github.com/h2so5/goback/regexp"
+  "golang.org/x/term"
 )
 
 type teletekst_pagina struct{
@@ -19,7 +20,6 @@ type teletekst_pagina struct{
   NextSubPage string
   FastTextLinks  []fastTextLink
   Content string
-
 }
 
 type fastTextLink struct {
@@ -28,6 +28,10 @@ type fastTextLink struct {
 }
 
 func main(){
+  //runtime.Goexit() is handig omdat alle defer statements worden aangeroepen, maar speelt niet goed met terminals
+  defer os.Exit(0)
+
+  //Voor wanneer er cmdline options zijn
   args := os.Args[1:]
   if len(args) != 0{
     if args[0] == "--output"{
@@ -35,47 +39,110 @@ func main(){
         path := args[1]
         page := args[2]
         writePageToFile(path, page)
-        os.Exit(0)
+        runtime.Goexit()
       }
     }
-    
+
     page := args[0]
-    printPage(page)
-    os.Exit(0)
+    printPage(fetchPage(page))
+    runtime.Goexit()
   }
-  printPage("101")
-  
+
+  //Standaardpagina
+  curPage := fetchPage("101")
+  printPage(curPage)
+
+  //Raw is nodig voor de interactieve modus
+  oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+  if err != nil {panic(err)}
+  defer term.Restore(int(os.Stdin.Fd()), oldState)
+
   var input string
   for {
-    fmt.Print("Pagina: ")
-    fmt.Scan(&input)
-    if input == "q"{os.Exit(0)}
-    clearScreen()
-    printPage(input)
+    term.MakeRaw(int(os.Stdin.Fd()))
+
+    byte := make([]byte, 1)
+    _, err2 := os.Stdin.Read(byte)
+    if err2 != nil {panic(err2)}
+    input = string(byte)
+     
+    if input == ":"{
+      //"command mode" ingaan, niet "interactive mode"
+      term.Restore(int(os.Stdin.Fd()), oldState)
+      fmt.Print(":")
+      fmt.Scanln(&input)
+      if input == "q"{runtime.Goexit()}
+      if input == "\n"{break}
     }
+    clearScreen()
+    newPage := getNewPage(input, curPage)
+
+    // Als de nieuwe pagina lege content heeft, blijven we op de huidige pagina
+    if newPage.Content != ""{
+      curPage = newPage
+    }
+    printPage(curPage)
   }
+}
+
+// Het hele idee is dat niet bestaande pagina's altijd als een lege struct worden gegeven
+func getNewPage(input string, curPage teletekst_pagina) teletekst_pagina{
+  var pagina teletekst_pagina
+  switch input{
+    case "h":
+      if curPage.PrevPage == "" {
+        fmt.Printf("Page does not exist\r\n") 
+        return pagina
+      }
+      pagina = fetchPage(curPage.PrevPage)
+    case "l":
+      if curPage.NextPage == "" {
+        fmt.Printf("Page does not exist\r\n") 
+        return pagina
+      }
+      pagina = fetchPage(curPage.NextPage)
+    case "j":
+      if curPage.NextSubPage == "" {
+        fmt.Printf("Page does not exist\r\n") 
+        return pagina
+      }
+      pagina = fetchPage(curPage.NextSubPage)
+    case "k":
+      if curPage.PrevSubPage == "" {
+        fmt.Printf("Page does not exist\r\n") 
+        return pagina
+      }
+      pagina = fetchPage(curPage.PrevSubPage)
+    default:
+      pagina = fetchPage(input)
+  }
+  return pagina
+}
 
 
-
-func printPage(page string) {
+func fetchPage(page string) teletekst_pagina{
+  var pagina teletekst_pagina
   url := fmt.Sprintf("https://teletekst-data.nos.nl/json/%v", page)
   response, err := http.Get(url)
   if err != nil {
-    fmt.Printf("Error getting to teletekst\n")
-    os.Exit(1)
+    fmt.Printf("Error getting to teletekst\r\n")
+    return pagina
   }
-  var pagina teletekst_pagina 
   if response.ContentLength == 0 {
-    fmt.Printf("Page does not exist\n") 
-    return
+    fmt.Printf("Page does not exist\r\n") 
+    return pagina
   }
   err = json.NewDecoder(response.Body).Decode(&pagina)
+  return pagina
+}
+
+func printPage(pagina teletekst_pagina) {
   lines := strings.Split(pagina.Content, "\n")
   for i := 0; i < len(lines); i++ {
     processed_line := processHTML(lines[i])
     processed_line = replaceBlockCharsR(processed_line)
     processed_line = replaceSpecialChars(processed_line)
-    fmt.Printf("%v\n", processed_line)
+    fmt.Printf("%v\r\n", processed_line)
   }
 }
 
@@ -83,12 +150,12 @@ func writePageToFile(path string, page string){
   url := fmt.Sprintf("https://teletekst-data.nos.nl/json/%v", page)
   response, err := http.Get(url)
   if err != nil {
-    fmt.Printf("Error getting to teletekst\n")
-    os.Exit(1)
+    fmt.Printf("Error getting to teletekst\r\n")
+    runtime.Goexit()
   }
   var pagina teletekst_pagina 
   if response.ContentLength == 0 {
-    fmt.Printf("Page does not exist\n") 
+    fmt.Printf("Page does not exist\r\n") 
     return
   }
   file, err := os.Create(path)
