@@ -2,31 +2,27 @@ package process
 
 import (
   "strings"
-  "slices"
   "github.com/h2so5/goback/regexp"
 )
 
 func ProcessHTML(line string) string{
-  // Remove all HTML tags
-  chars := strings.Split(line, "")
-  var begin int
-  var end int
-  for {
-    if !slices.Contains(chars, "<") && !slices.Contains(chars, ">"){
-      break
-    }
-    for i := 0; i < len(chars); i++{
-      if chars[i] == "<"{
-        begin = i
-      }
-      if chars[i] == ">"{
-        end = i
-        chars = slices.Delete(chars, begin, end + 1)
-        break
+  //Fixed html parser with fancy but (maybe) unnecessary stack
+  stack := []int{}
+  for i := len(line)-1; i >= 0; i--{
+    switch line[i]{
+      case '<':
+        //store closing tag then remove it from the stack
+        // now we simply remove from the ending to opening tag
+        if len(stack) != 0{
+          closingTag := stack[len(stack)-1]
+          stack = stack[:len(stack)-1]
+          line = strings.Join([]string{line[:i], line[closingTag+1:]}, "")
+        }
+      case '>':
+        stack = append(stack, i)
       }
     }
-  }
-  return strings.Join(chars, "")
+  return line
 }
 
 func ReplaceBlockCharsR(line string) string {
