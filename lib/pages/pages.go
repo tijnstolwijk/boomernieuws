@@ -1,14 +1,12 @@
 package pages
 
-
 import (
-  "boomernieuws/lib/process"
+	"boomernieuws/lib/process"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
-
 )
 type Teletekst_pagina struct{
   PrevPage string
@@ -17,6 +15,7 @@ type Teletekst_pagina struct{
   NextSubPage string
   FastTextLinks  []fastTextLink
   Content string
+  SelfPage string
 }
 
 type fastTextLink struct {
@@ -37,36 +36,47 @@ func FetchPage(page string) Teletekst_pagina{
     return pagina
   }
   err = json.NewDecoder(response.Body).Decode(&pagina)
+  pagina.SelfPage = page
   return pagina
 }
 
-func PrintPage(pagina Teletekst_pagina) {
+func ParsePage(pagina Teletekst_pagina) string{
   lines := strings.Split(pagina.Content, "\n")
   for i := 0; i < len(lines); i++ {
     processed_line := process.ProcessHTML(lines[i])
     processed_line = process.ReplaceBlockCharsR(processed_line)
     processed_line = process.ReplaceSpecialChars(processed_line)
-    fmt.Printf("%v\r\n", processed_line)
+    lines[i] = processed_line
   }
+  return strings.Join(lines, "\r\n")
 }
 
-func WritePageToFile(path string, pagina Teletekst_pagina){
+func SaveText(path string, text string){
   file, err := os.Create(path)
   if err != nil{
     panic(err)
   }
   defer file.Close()
-
-  lines := strings.Split(pagina.Content, "\n")
-  for i := 0; i < len(lines); i++ {
-    processed_line := process.ProcessHTML(lines[i])
-    processed_line = process.ReplaceBlockCharsR(processed_line)
-    processed_line = process.ReplaceSpecialChars(processed_line)
-    _, err := file.WriteString(fmt.Sprintf("%v\n", processed_line))
-    if err != nil{
-      panic(err)
-    }
+  
+  _, err = file.WriteString(text)
+  if err != nil{
+    panic(err)
   }
   file.Sync()
 }
 
+
+//High-level functions used by boomernieuws
+
+func SavePage(pageAddr string, path string) {
+  page := FetchPage(pageAddr)
+  text := ParsePage(page)
+  SaveText(path, text)
+}
+
+func PrintPage(pageAddr string) Teletekst_pagina{
+  page := FetchPage(pageAddr)
+  text := ParsePage(page)
+  fmt.Print(text)
+  return page
+}

@@ -1,12 +1,13 @@
 package main
 
 import (
+	"boomernieuws/lib/pages"
 	"fmt"
 	"os"
-  "os/exec"
-  "runtime"
-  "golang.org/x/term"
-  "boomernieuws/lib/pages"
+	"os/exec"
+	"runtime"
+
+	"golang.org/x/term"
 )
 
 type teletekst_pagina struct{
@@ -33,20 +34,18 @@ func main(){
       if len(args) == 3{
         path := args[1]
         addr := args[2]
-        page := pages.FetchPage(addr) 
-        pages.WritePageToFile(path, page)
+        pages.SavePage(addr, path)
         runtime.Goexit()
       }
     }
 
-    page := args[0]
-    pages.PrintPage(pages.FetchPage(page))
+    addr := args[0]
+    pages.PrintPage(addr)
     runtime.Goexit()
   }
 
   //Standaardpagina
-  curPage := pages.FetchPage("101")
-  pages.PrintPage(curPage)
+  curPage := pages.PrintPage("101")
 
   //Raw is nodig voor de interactieve modus
   oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -71,46 +70,39 @@ func main(){
       if input == "\n"{break}
     }
     clearScreen()
-    newPage := getNewPage(input, curPage)
-
-    // Als de nieuwe pagina lege content heeft, blijven we op de huidige pagina
-    if newPage.Content != ""{
-      curPage = newPage
-    }
-    pages.PrintPage(curPage)
+    curPage = getNewPage(input, curPage)
   }
 }
 
-// Het hele idee is dat niet bestaande pagina's altijd als een lege struct worden gegeven
 func getNewPage(input string, curPage pages.Teletekst_pagina) pages.Teletekst_pagina{
   var pagina pages.Teletekst_pagina
   switch input{
     case "h":
       if curPage.PrevPage == "" {
         fmt.Printf("Page does not exist\r\n") 
-        return pagina
+        return pages.PrintPage(curPage.SelfPage)
       }
-      pagina = pages.FetchPage(curPage.PrevPage)
+      pagina = pages.PrintPage(curPage.PrevPage)
     case "l":
       if curPage.NextPage == "" {
         fmt.Printf("Page does not exist\r\n") 
-        return pagina
+        return pages.PrintPage(curPage.SelfPage)
       }
-      pagina = pages.FetchPage(curPage.NextPage)
+      pagina = pages.PrintPage(curPage.NextPage)
     case "j":
       if curPage.NextSubPage == "" {
         fmt.Printf("Page does not exist\r\n") 
-        return pagina
+        return pages.PrintPage(curPage.SelfPage)
       }
-      pagina = pages.FetchPage(curPage.NextSubPage)
+      pagina = pages.PrintPage(curPage.NextSubPage)
     case "k":
       if curPage.PrevSubPage == "" {
         fmt.Printf("Page does not exist\r\n") 
-        return pagina
+        return pages.PrintPage(curPage.SelfPage)
       }
-      pagina = pages.FetchPage(curPage.PrevSubPage)
+      pagina = pages.PrintPage(curPage.PrevSubPage)
     default:
-      pagina = pages.FetchPage(input)
+      pagina = pages.PrintPage(input)
   }
   return pagina
 }
