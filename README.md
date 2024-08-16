@@ -2,8 +2,8 @@
 
 Read teletekst from the terminal.
 The code is horrible, please use any other teletekst reader,
-except of course the electron client xD jkjk
-BTW: just build it yourself, i won't update the releases
+except of course the electron client xD jkjk.
+BTW: just build it yourself, i won't update the releases.
 
 ## Usage
 
