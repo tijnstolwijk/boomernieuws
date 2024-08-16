@@ -59,6 +59,6 @@ To get page 101 from timestamp 1723754183 you run this command:
 $ archiveringsdienst read 1723754183 101
 ```
 
-Archiveringsdienst will look to the most recent recorded timestamp for the given timestamp
-if the page is not present in this timestamp it looks to the timestamps before it
+Archiveringsdienst will look to the most recent recorded timestamp for the given timestamp.
+If the page is not present in this timestamp it looks to the timestamps before it
 until it finds it.
