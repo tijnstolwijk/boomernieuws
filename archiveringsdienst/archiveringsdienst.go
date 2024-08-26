@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
   "slices"
-	"boomernieuws/lib/pages"
+	"github.com/tijnstolwijk/boomernieuws/lib/pages"
 	"fmt"
 )
 
@@ -60,12 +60,7 @@ func downloadAll(){
 
 }
 func download(pageAddr string, timestamp int64) pages.Teletekst_pagina{
-  //downloads page and returns that page
-  //TODO: we only want to download if the page isn't the same as the latest version of the same page
-  //We fetch a page and process it, but don't save it to the system just yet
-  //First we compare to the latest page that existed
-  //We don't want to process our pages twice, once to compare, once to save
-  //This requires us to overhaul the page management file
+  //downloads page if it is unique and returns that page 
   page := pages.FetchPage(pageAddr)
   processedPage := pages.ParsePage(page)
   latestPage := readLatestPage(pageAddr)

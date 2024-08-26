@@ -1,7 +1,7 @@
 package pages
 
 import (
-	"boomernieuws/lib/process"
+	"github.com/tijnstolwijk/boomernieuws/lib/process"
 	"encoding/json"
 	"fmt"
 	"net/http"

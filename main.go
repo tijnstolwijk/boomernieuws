@@ -1,7 +1,7 @@
 package main
 
 import (
-	"boomernieuws/lib/pages"
+	"github.com/tijnstolwijk/boomernieuws/lib/pages"
 	"fmt"
 	"os"
 	"os/exec"

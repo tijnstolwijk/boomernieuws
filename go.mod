@@ -1,4 +1,4 @@
-module boomernieuws
+module github.com/tijnstolwijk/boomernieuws
 
 go 1.22.4
 
